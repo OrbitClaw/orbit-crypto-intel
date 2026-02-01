@@ -1,59 +1,84 @@
 # Crypto Intel - OpenClaw Skill
 
-加密货币新闻爬取与情报收集技能。定时爬取多个新闻源，筛选关键信息并通过Telegram发送报告。
+加密货币新闻爬取与情报收集技能。适用于定时任务或即时查询，支持多种使用场景。
 
 ## 功能特性
 
 - **多源爬取**: 10+ 新闻网站和X/Twitter列表
 - **智能筛选**: 自动识别6大类关键信息
-- **定时执行**: 每天 09:03, 15:03, 22:03 (Asia/Shanghai)
-- **Telegram推送**: 完成后直接发送到指定用户
+- **灵活输出**: 可发送到Telegram或直接在对话中返回
+- **交互式Cookie检查**: 执行前询问用户是否提供X cookie
+
+## 使用场景
+
+### 场景1：即时对话查询
+```
+用户: "帮我爬取一下最近6小时的加密货币新闻"
+Agent: 使用默认参数（12小时），在对话中返回报告
+```
+
+### 场景2：Telegram定时推送
+```
+Cron Job: 每天 09:03, 15:03, 22:03
+发送到: Telegram用户或频道
+```
+
+### 场景3：手动触发任务
+```
+./crypto-intel.sh --hours 24 --telegram 5844680524
+```
 
 ## 安装
 
 ```bash
-# 通过ClawHub安装（待发布）
-claw install orbit-crypto-intel
-
-# 或手动安装
+# 克隆仓库
 git clone https://github.com/OrbitClaw/orbit-crypto-intel.git
 cd orbit-crypto-intel
 ```
 
 ## 使用方法
 
-### 方式1：直接运行
+### 方法A：直接复制任务提示词
+
+将 `task-prompt.txt` 内容复制到：
+- OpenClaw agent配置
+- Cron job的payload.message
+- 即时对话中
+
+**参数说明（可选）：**
+- `{{HOURS}}` - 时间窗口，默认12小时
+- `{{TELEGRAM_ID}}` - Telegram用户ID，可选（不设置则直接在对话中返回）
+
+### 方法B：使用命令行脚本
 
 ```bash
-# 执行爬取任务（12小时窗口）
-./crypto-intel.sh --hours 12 --telegram 5844680524
-
-# 完整爬取（24小时窗口）
+# 带参数执行（可选）
 ./crypto-intel.sh --hours 24 --telegram 5844680524
+
+# 默认执行（12小时窗口，对话中返回）
+./crypto-intel.sh
 ```
 
-### 方式2：配置Cron Job
+### 方法C：配置Cron Job
 
 ```bash
 # 添加定时任务（OpenClaw cron）
 openclaw cron add --name "crypto-news" \
   --schedule "3 9,15,22 * * *" \
   --session isolated \
-  --payload '{"kind":"agentTurn","message":"...","to":"5844680524"}'
+  --payload '{"kind":"agentTurn","message":"<复制task-prompt.txt内容>","to":"5844680524"}'
 ```
-
-### 方式3：集成到OpenClaw
-
-将任务提示词复制到你的OpenClaw agent配置中。
 
 ## 配置选项
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `--hours` | 时间窗口（小时） | 12 |
-| `--telegram` | Telegram用户ID | 必填 |
-| `--output` | 输出格式 (text\|json\|markdown) | markdown |
-| `--deep` | 是否爬取深度长文 | true |
+| 参数 | 说明 | 默认值 | 必填 |
+|------|------|--------|------|
+| `--hours` | 时间窗口（小时） | 12 | ❌ 否 |
+| `--telegram` | Telegram用户ID | - | ❌ 否 |
+| `--output` | 输出格式 (text\|json\|markdown) | markdown | ❌ 否 |
+| `--deep` | 是否爬取深度长文 | true | ❌ 否 |
+
+**注意**：不设置 `--telegram` 时，报告直接在当前对话中返回。
 
 ## 报告分类
 
@@ -209,6 +234,12 @@ MIT License
 
 ## 更新日志
 
+### v1.3.0 (2026-02-01)
+- ✨ **参数可选化**
+  - `--hours` 和 `--telegram` 参数变为可选
+  - 不设置 `--telegram` 时直接在对话中返回报告
+  - 支持即时查询和定时推送两种模式
+
 ### v1.2.0 (2026-02-01)
 - ✨ **新增交互式Cookie确认**
   - Cookie无效/未设置时，**先询问用户**再执行
@@ -221,7 +252,6 @@ MIT License
   - 未设置或已失效时提示用户提供/更新
   - 优先使用bird，失败后自动fallback到web_fetch
 - 📊 报告中显示cookie状态和数据来源
-- 📝 更新任务提示词，增加cookie检查步骤
 
 ### v1.0.0 (2026-02-01)
 - 初始版本
