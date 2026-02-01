@@ -1,0 +1,144 @@
+去下面的信息源爬取时间窗口{{HOURS}}小时内的新闻、公告与kol发言，摘取以下信息并附上原文链接：
+
+## 信息筛选标准
+
+### 1. 大户动向
+- 巨鲸的资金流入流出（单笔>1000 ETH或等值）
+- 大户对市场的态度变化（增持/减持/公开表态）
+- 知名地址（如"0x1234..."开头）的链上操作
+
+### 2. 利率事件
+- 美联储委员的发言表态
+- FOMC会议相关消息
+- 利率政策预期变化
+
+### 3. 美国政府监管政策
+- SEC/CFTC/财政部重大政策调整
+- 立法进展（国会法案）
+- 监管执法行动
+
+### 4. 安全事件
+- 黑客攻击、漏洞披露
+- 资金被盗、协议被黑
+- 重大安全预警
+
+### 5. 新产品（需鉴别）
+- KOL提及的新项目/协议
+- 必须是真正的创新，不是项目方广告
+- 如疑似广告则忽略
+
+### 6. 市场新现象
+- 新趋势、新变化
+- 链上数据异常
+- 新的市场模式
+
+---
+
+## 操作规范
+
+### 忽略以下内容
+1. 广告和软文
+2. 重复信息
+3. 情绪发泄和口水战
+4. 空洞的道理和预测
+5. 立场争论和口水仗
+
+### 爬取要求
+1. 尽量遍历时间窗口内所有信息不要遗漏
+2. 不用着急返回结果，可以后台慢慢做
+3. 完成后再汇总报告
+4. 如遇困难（网站无法访问等）在报告中说明
+
+---
+
+## 信息源与爬取方法
+
+### 一、新闻快讯网站（使用browser）
+
+对于每个网站：
+1. 打开页面后等待完全加载（timeMs: 3000）
+2. 向下滚动加载更多内容（scroll y: 800）
+3. 每次滚动后等待2秒再snapshot
+4. 重复滚动直到没有新内容
+
+**网站列表：**
+1. https://www.panewslab.com/zh/newsflash
+2. https://foresightnews.pro/news
+3. https://www.techflowpost.com/zh-CN/newsletter
+4. https://www.theblockbeats.info/newsflash
+5. https://www.coindesk.com/latest-crypto-news
+6. https://cointelegraph.com/category/latest-news
+7. https://www.binance.com/en/support/announcement/list/49 (Binance New)
+8. https://www.binance.com/en/support/announcement/list/93 (Token)
+9. https://www.binance.com/en/support/announcement/list/161 (Futures)
+10. https://www.binance.com/en/support/announcement/list/48 (Latest)
+
+### 二、X/Twitter列表（使用bird）
+
+**注意**：如果bird工具因为cookie过期失败，使用web_fetch替代
+
+查询以下列表获取KOL发言：
+1. https://x.com/i/lists/1826855418095980750
+2. https://x.com/i/lists/1469191354446401543
+3. 用户的X关注列表（如有）
+
+**bird用法（如果可用）：**
+```bash
+bird list-timeline <list_id> -n 20 --auth-token <auth_token> --ct0 <ct0>
+```
+
+**替代方案（如果bird失败）：**
+```javascript
+// 使用web_fetch获取列表页面
+const listPage = await web_fetch({
+  url: "https://x.com/i/lists/xxxx",
+  extractMode: "text",
+  maxChars: 30000
+});
+```
+
+### 三、深度长文（使用web_fetch）
+
+**重要**：深度长文不要用browser，用web_fetch获取完整内容
+
+对于每个深度文章：
+1. 先用browser打开列表页，找到时间窗口内的文章链接
+2. 对每篇文章，使用web_fetch获取完整内容：
+```javascript
+const article = await web_fetch({
+  url: "https://xxxxx/article/xxxxx",
+  extractMode: "text",  // 或 "markdown"
+  maxChars: 50000       // 根据需要调整
+});
+```
+
+**深度长文网站：**
+1. https://www.techflowpost.com/zh-CN/article
+2. https://www.techflowpost.com/zh-CN/research
+3. https://www.theblockbeats.info/article
+4. https://www.panewslab.com/en/in-depth
+5. https://foresightnews.pro/column
+
+---
+
+## 输出要求
+
+1. 按6大类别分类整理
+2. 每条信息附带原文链接
+3. 使用emoji增强可读性
+4. 简洁明了，避免冗长
+5. 如果某个类别无重要信息，注明"（本次无重大消息）"
+
+**输出格式（用于Telegram）：**
+- 使用markdown格式
+- 每个类别用emoji标注（1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣）
+- 链接使用短链接或完整链接
+- 总长度适中，避免过长刷屏
+
+---
+
+## 时间窗口
+过去 {{HOURS}} 小时
+
+## 输出目标
+发送到 Telegram: {{TELEGRAM_ID}}
