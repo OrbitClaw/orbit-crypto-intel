@@ -1,5 +1,55 @@
 去下面的信息源爬取时间窗口{{HOURS}}小时内的新闻、公告与kol发言，摘取以下信息并附上原文链接：
 
+## X/Twitter Cookie 检查（第一步）
+
+在开始任何爬取任务之前，**必须先检查X cookie是否有效**：
+
+### 步骤1：检查cookie是否存在
+```bash
+# 检查环境变量或配置文件中的cookie
+echo "auth_token: ${X_AUTH_TOKEN:-未设置}"
+echo "ct0: ${X_CT0:-未设置}"
+```
+
+### 步骤2：验证cookie有效性
+```bash
+# 尝试用bird查询一个测试列表
+bird list-timeline 1826855418095980750 -n 5 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
+```
+
+### 步骤3：根据结果处理
+
+**情况A：Cookie未设置**
+→ 在报告中说明：
+```
+⚠️ X/Twitter Cookie 未配置
+请提供以下信息：
+1. 在 x.com 登录后，打开开发者工具 (F12)
+2. Application -> Cookies -> https://x.com
+3. 复制 ct0 和 auth_token 的值
+
+环境变量设置：
+export X_AUTH_TOKEN="你的auth_token值"
+export X_CT0="你的ct0值"
+```
+
+**情况B：Cookie无效（bird返回错误或空结果）**
+→ 在报告中说明：
+```
+⚠️ X/Twitter Cookie 已失效
+请按以下步骤更新：
+1. 在浏览器中重新登录 x.com
+2. 打开开发者工具 (F12) -> Application -> Cookies
+3. 复制新的 ct0 和 auth_token 值
+4. 更新环境变量后重试
+```
+
+**情况C：Cookie有效**
+→ 继续使用bird爬取X列表
+→ 如果后续bird失败，再fallback到web_fetch
+
+---
+
 ## 信息筛选标准
 
 ### 1. 大户动向
@@ -67,33 +117,35 @@
 3. https://www.techflowpost.com/zh-CN/newsletter
 4. https://www.theblockbeats.info/newsflash
 5. https://www.coindesk.com/latest-crypto-news
-6. https://cointelegraph.com/category/latest-news
+6. https://www.cointelegraph.com/category/latest-news
 7. https://www.binance.com/en/support/announcement/list/49 (Binance New)
 8. https://www.binance.com/en/support/announcement/list/93 (Token)
 9. https://www.binance.com/en/support/announcement/list/161 (Futures)
 10. https://www.binance.com/en/support/announcement/list/48 (Latest)
 
-### 二、X/Twitter列表（使用bird）
+### 二、X/Twitter列表（优先使用bird）
 
-**注意**：如果bird工具因为cookie过期失败，使用web_fetch替代
+**执行顺序：**
+1. **首先尝试bird**（如果cookie有效）
+2. **如果bird失败** → 使用web_fetch作为fallback
 
-查询以下列表获取KOL发言：
+**查询以下列表获取KOL发言：**
 1. https://x.com/i/lists/1826855418095980750
 2. https://x.com/i/lists/1469191354446401543
 3. 用户的X关注列表（如有）
 
-**bird用法（如果可用）：**
+**bird用法（优先使用）：**
 ```bash
-bird list-timeline <list_id> -n 20 --auth-token <auth_token> --ct0 <ct0>
+bird list-timeline <list_id> -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
 ```
 
-**替代方案（如果bird失败）：**
+**fallback方案（bird失败时）：**
 ```javascript
 // 使用web_fetch获取列表页面
 const listPage = await web_fetch({
   url: "https://x.com/i/lists/xxxx",
   extractMode: "text",
-  maxChars: 30000
+  maxChars: 50000
 });
 ```
 
@@ -123,11 +175,23 @@ const article = await web_fetch({
 
 ## 输出要求
 
-1. 按6大类别分类整理
-2. 每条信息附带原文链接
-3. 使用emoji增强可读性
-4. 简洁明了，避免冗长
-5. 如果某个类别无重要信息，注明"（本次无重大消息）"
+### 必须在报告中包含
+
+1. **Cookie状态**：
+   ```
+   X Cookie状态: ✅ 有效 / ⚠️ 已失效 / ❌ 未设置
+   ```
+
+2. **X数据来源**：
+   ```
+   X列表数据: ✅ 来自bird / ⚠️ 来自web_fetch(fallback) / ❌ 未获取
+   ```
+
+3. **按6大类别分类整理**
+4. **每条信息附带原文链接**
+5. **使用emoji增强可读性**
+6. **简洁明了，避免冗长**
+7. **如果某个类别无重要信息，注明"（本次无重大消息）"**
 
 **输出格式（用于Telegram）：**
 - 使用markdown格式
