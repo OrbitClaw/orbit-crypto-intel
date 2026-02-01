@@ -1,8 +1,8 @@
 去下面的信息源爬取时间窗口{{HOURS}}小时内的新闻、公告与kol发言，摘取以下信息并附上原文链接：
 
-## X/Twitter Cookie 检查（第一步）
+## 第一步：检查X/Twitter Cookie
 
-在开始任何爬取任务之前，**必须先检查X cookie是否有效**：
+**在开始任何爬取任务之前，必须先检查cookie状态。**
 
 ### 步骤1：检查cookie是否存在
 ```bash
@@ -19,34 +19,27 @@ bird list-timeline 1826855418095980750 -n 5 --auth-token "${X_AUTH_TOKEN}" --ct0
 
 ### 步骤3：根据结果处理
 
-**情况A：Cookie未设置**
-→ 在报告中说明：
+**情况A：Cookie未设置或无效**
+→ 向用户发送消息询问：
 ```
-⚠️ X/Twitter Cookie 未配置
-请提供以下信息：
-1. 在 x.com 登录后，打开开发者工具 (F12)
-2. Application -> Cookies -> https://x.com
-3. 复制 ct0 和 auth_token 的值
+⚠️ X/Twitter Cookie 未设置或已失效
 
-环境变量设置：
-export X_AUTH_TOKEN="你的auth_token值"
-export X_CT0="你的ct0值"
-```
+请选择：
+1. 提供新的cookie值（推荐，bird更可靠）：
+   - 在 x.com 登录后，打开开发者工具 (F12)
+   - Application -> Cookies -> https://x.com
+   - 复制 ct0 和 auth_token 的值发送给我
 
-**情况B：Cookie无效（bird返回错误或空结果）**
-→ 在报告中说明：
-```
-⚠️ X/Twitter Cookie 已失效
-请按以下步骤更新：
-1. 在浏览器中重新登录 x.com
-2. 打开开发者工具 (F12) -> Application -> Cookies
-3. 复制新的 ct0 和 auth_token 值
-4. 更新环境变量后重试
+2. 使用 web_fetch 替代bird（功能受限，可能不完整）
+
+请回复你的选择，或直接发送新的cookie值。
 ```
 
-**情况C：Cookie有效**
+**等待用户回复后再继续。**
+
+**情况B：Cookie有效**
 → 继续使用bird爬取X列表
-→ 如果后续bird失败，再fallback到web_fetch
+→ 正常执行所有任务
 
 ---
 
@@ -123,23 +116,14 @@ export X_CT0="你的ct0值"
 9. https://www.binance.com/en/support/announcement/list/161 (Futures)
 10. https://www.binance.com/en/support/announcement/list/48 (Latest)
 
-### 二、X/Twitter列表（优先使用bird）
+### 二、X/Twitter列表
 
-**执行顺序：**
-1. **首先尝试bird**（如果cookie有效）
-2. **如果bird失败** → 使用web_fetch作为fallback
-
-**查询以下列表获取KOL发言：**
-1. https://x.com/i/lists/1826855418095980750
-2. https://x.com/i/lists/1469191354446401543
-3. 用户的X关注列表（如有）
-
-**bird用法（优先使用）：**
+**优先使用bird**（如果用户提供了有效cookie）：
 ```bash
 bird list-timeline <list_id> -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
 ```
 
-**fallback方案（bird失败时）：**
+**Fallback使用web_fetch**（如果用户选择不使用cookie）：
 ```javascript
 // 使用web_fetch获取列表页面
 const listPage = await web_fetch({
@@ -148,6 +132,11 @@ const listPage = await web_fetch({
   maxChars: 50000
 });
 ```
+
+**查询列表：**
+1. https://x.com/i/lists/1826855418095980750
+2. https://x.com/i/lists/1469191354446401543
+3. 用户的X关注列表（如有）
 
 ### 三、深度长文（使用web_fetch）
 
@@ -177,21 +166,16 @@ const article = await web_fetch({
 
 ### 必须在报告中包含
 
-1. **Cookie状态**：
+1. **Cookie使用情况**：
    ```
-   X Cookie状态: ✅ 有效 / ⚠️ 已失效 / ❌ 未设置
-   ```
-
-2. **X数据来源**：
-   ```
-   X列表数据: ✅ 来自bird / ⚠️ 来自web_fetch(fallback) / ❌ 未获取
+   X数据来源: ✅ bird / ⚠️ web_fetch(fallback)
    ```
 
-3. **按6大类别分类整理**
-4. **每条信息附带原文链接**
-5. **使用emoji增强可读性**
-6. **简洁明了，避免冗长**
-7. **如果某个类别无重要信息，注明"（本次无重大消息）"**
+2. **按6大类别分类整理**
+3. **每条信息附带原文链接**
+4. **使用emoji增强可读性**
+5. **简洁明了，避免冗长**
+6. **如果某个类别无重要信息，注明"（本次无重大消息）"**
 
 **输出格式（用于Telegram）：**
 - 使用markdown格式

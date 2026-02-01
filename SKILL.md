@@ -89,16 +89,26 @@ await browser.snapshot({ timeMs: 2000 });
 **原因**: X的ct0/auth_token cookie过期（通常1-7天）
 **解决方案**:
 
-#### 自动检查（v1.1.0+）
+#### 交互式Cookie检查（v1.2.0+）
 
-任务提示词已内置cookie检查逻辑，会自动：
+任务现在会**在执行前主动询问用户**：
 
-1. **检查cookie是否存在**
-2. **验证cookie有效性**（用bird测试查询）
-3. **根据结果处理**：
-   - 未设置 → 提示用户提供
-   - 已失效 → 提示更新
-   - 有效 → 继续使用bird
+1. **检测到Cookie无效/未设置**
+2. **发送消息给用户**：
+```
+⚠️ X/Twitter Cookie 未设置或已失效
+
+请选择：
+1. 提供新的cookie值（推荐）：
+   - 在 x.com 登录后，F12 -> Application -> Cookies
+   - 复制 ct0 和 auth_token 的值
+
+2. 使用 web_fetch 替代（直接回复这个选择）
+```
+3. **等待用户回复**
+4. **根据回复行动**：
+   - 提供cookie → 使用bird
+   - 选择fallback → 使用web_fetch
 
 #### 手动更新步骤
 
@@ -106,15 +116,16 @@ await browser.snapshot({ timeMs: 2000 });
 # 1. 在浏览器中登录 x.com
 # 2. 打开开发者工具 (F12) -> Application -> Cookies
 # 3. 复制 ct0 和 auth_token 的值
+# 4. 发送给agent
 
-# 设置环境变量
+# 或设置环境变量
 export X_CT0="新ct0值"
 export X_AUTH_TOKEN="新auth_token值"
 ```
 
 #### Fallback机制
 
-如果cookie无效或bird失败，任务会自动fallback到web_fetch：
+如果用户选择不使用cookie，任务会使用web_fetch获取X列表：
 ```javascript
 const listPage = await web_fetch({
   url: "https://x.com/i/lists/xxxx",
@@ -128,14 +139,12 @@ const listPage = await web_fetch({
 任务完成后会显示：
 
 ```
-✅ X Cookie状态: 有效
-✅ X列表数据: 来自bird
+✅ X数据来源: bird（用户提供cookie）
 
 或
 
-⚠️ X Cookie状态: 已失效
-⚠️ X列表数据: 来自web_fetch(fallback)
-请更新Cookie后重试...
+⚠️ X数据来源: web_fetch(fallback)
+（用户选择不使用cookie）
 ```
 
 ### 问题3：长文内容被截断
@@ -199,6 +208,12 @@ orbit-crypto-intel/
 MIT License
 
 ## 更新日志
+
+### v1.2.0 (2026-02-01)
+- ✨ **新增交互式Cookie确认**
+  - Cookie无效/未设置时，**先询问用户**再执行
+  - 用户可选择提供cookie或使用web_fetch fallback
+  - 等待用户回复后再继续任务
 
 ### v1.1.0 (2026-02-01)
 - ✨ **新增X Cookie自动检查功能**
