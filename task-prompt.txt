@@ -39,17 +39,18 @@ echo "ct0: ${X_CT0:-未设置}"
 
 ---
 
-### 第二步：爬取新闻快讯网站
+### 第二步：爬取新闻快讯网站（优先使用browser）
 
 **使用browser爬取，每个网站按以下步骤：**
 1. 打开页面后等待完全加载（timeMs: 3000）
 2. 向下滚动加载更多内容（scroll y: 800）
 3. 每次滚动后等待2秒再snapshot
-4. 重复滚动直到没有新内容
+4. 重复滚动直到没有新内容或滚动到页面底部
+5. 如browser无法获取完整内容，再尝试web_fetch作为fallback
 
 **记录每个网站的状态：**
-- ✅ 成功获取
-- ⚠️ 页面加载不完整/需滚动加载
+- ✅ browser成功获取
+- ⚠️ browser部分内容/fallback到web_fetch
 - ❌ 无法访问/被限制
 
 **网站列表：**
@@ -70,10 +71,12 @@ echo "ct0: ${X_CT0:-未设置}"
 
 **优先使用bird**（如果用户提供了有效cookie）：
 ```bash
-bird list-timeline <list_id> -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
+bird list-timeline 1826855418095980750 -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
+bird list-timeline 1469191354446401543 -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
+bird list-timeline following --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"  # 本账号follow的用户
 ```
 
-**Fallback使用web_fetch**（如果用户选择不使用cookie）：
+**Fallback使用web_fetch**（如果用户选择不使用cookie或bird失败）：
 ```javascript
 const listPage = await web_fetch({
   url: "https://x.com/i/lists/xxxx",
@@ -90,16 +93,17 @@ const listPage = await web_fetch({
 **查询列表：**
 1. https://x.com/i/lists/1826855418095980750
 2. https://x.com/i/lists/1469191354446401543
+3. **本账号follow的用户**（使用 `bird list-timeline following` 或查询following列表）
 
 ---
 
-### 第四步：爬取深度长文网站
+### 第四步：爬取深度长文网站（优先使用browser）
 
-**重要**：深度长文使用web_fetch获取完整内容，不是browser。
+**重要**：深度长文先用browser获取列表，再逐个用web_fetch获取完整内容。
 
 **步骤：**
-1. 用browser打开列表页
-2. 找到时间窗口内的文章链接
+1. 用browser打开列表页，等待完全加载（timeMs: 3000）
+2. 向下滚动找到时间窗口内的文章链接（scroll y: 800，重复2-3次）
 3. 对每篇文章使用web_fetch获取完整内容：
 ```javascript
 const article = await web_fetch({
@@ -108,10 +112,12 @@ const article = await web_fetch({
   maxChars: 50000
 });
 ```
+4. 记录每篇文章的标题和链接
 
 **记录每个网站的状态：**
-- 列出时间窗口内找到的文章数量
-- 如无新文章，注明"本次无更新"
+- browser打开列表页是否成功
+- 找到多少篇文章
+- 成功获取完整内容的文章数
 
 **深度长文网站：**
 1. https://www.techflowpost.com/zh-CN/article
@@ -180,7 +186,7 @@ const article = await web_fetch({
 # 加密货币新闻快讯报告（过去{{HOURS}}小时）
 
 **数据时间窗口**: YYYY-MM-DD HH:MM - HH:MM (UTC)  
-**X数据来源**: ✅ bird / ⚠️ web_fetch(fallback) / ❌ 未获取
+**X数据来源**: ✅ bird（Cookie有效） / ⚠️ web_fetch(fallback)
 ```
 
 ### 网站爬取状态
@@ -190,19 +196,20 @@ const article = await web_fetch({
 ### 新闻快讯网站
 | 网站 | 状态 | 备注 |
 |------|------|------|
-| panewslab.com | ✅/⚠️/❌ | |
-| foresightnews.pro | ✅/⚠️/❌ | |
+| panewslab.com | ✅ browser / ⚠️ fallback / ❌ | |
+| foresightnews.pro | ✅ browser / ⚠️ fallback / ❌ | |
 | ... | ... | ... |
 
 ### X/Twitter列表
-- 列表1: ✅ bird / ⚠️ web_fetch / ❌ 失败
-- 列表2: ✅ bird / ⚠️ web_fetch / ❌ 失败
+- 列表1: ✅ bird / ⚠️ web_fetch / ❌ 失败 (获取N条)
+- 列表2: ✅ bird / ⚠️ web_fetch / ❌ 失败 (获取N条)
+- Following用户: ✅ bird / ⚠️ web_fetch / ❌ 失败 (获取N条)
 
 ### 深度长文网站
-| 网站 | 时间窗口内文章数 | 备注 |
-|------|-----------------|------|
-| techflowpost.com/article | X篇 | 或"本次无更新" |
-| ... | ... | ... |
+| 网站 | 找到文章 | 获取完整内容 | 备注 |
+|------|----------|--------------|------|
+| techflowpost.com/article | X篇 | X篇 | 或"本次无更新" |
+| ... | ... | ... | ... |
 ```
 
 ### 信息分类（6大类）
