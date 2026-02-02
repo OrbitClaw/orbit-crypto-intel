@@ -91,30 +91,6 @@ blogwatcher articles
 - ⚠️ 部分成功（记录获取到的数量）
 - ❌ 扫描失败（记录原因）
 
-#### 2.2 使用browser爬取无RSS的信息源
-
-**无RSS的网站必须使用browser**（web_fetch无法处理JS渲染的动态内容）。
-
-**每个网站按以下步骤：**
-1. 使用browser打开页面
-2. 等待完全加载（timeMs: 3000）
-3. 向下滚动加载更多内容（scroll y: 800）
-4. 每次滚动后等待2秒再snapshot
-5. 重复滚动直到没有新内容或滚动到页面底部
-6. 记录每个网站的状态和获取到的快讯数量
-
-**记录每个网站的状态：**
-- ✅ browser成功获取（记录N条）
-- ⚠️ browser部分成功（记录获取到的数量）
-- ❌ 无法访问/被限制（记录原因）
-
-**仍需使用browser的网站（无RSS）：**
-- 币安公告页面（需动态加载）：
-  - https://www.binance.com/en/support/announcement/list/49 (新产品)
-  - https://www.binance.com/en/support/announcement/list/93 (活动)
-  - https://www.binance.com/en/support/announcement/list/161 (NFT)
-  - https://www.binance.com/en/support/announcement/list/48 (代币)
-
 ---
 
 ### 第三步：爬取X/Twitter列表
@@ -236,20 +212,16 @@ const listPage = await web_fetch({
 ### BlogWatcher RSS订阅（自动扫描）
 | 订阅源 | 状态 | 获取数量 | 备注 |
 |--------|------|----------|------|
-| TechFlow RSS | ✅ | N条 | 快讯+深度文章 |
-
-### 新闻快讯网站（无RSS，使用browser）
-| 网站 | 状态 | 获取数量 |
-|------|------|----------|
-| panewslab.com | ✅ | N条 |
-| theblockbeats.info | ✅/⚠️/❌ | N条 |
-| coindesk.com | ✅/⚠️/❌ | N条 |
-| cointelegraph.com | ✅/⚠️/❌ | N条 |
+| PANews | ✅ | N条 | 快讯 |
+| CoinDesk | ✅ | N条 | 快讯+深度 |
+| BlockBeats | ✅ | N条 | 快讯+深度 |
+| Cointelegraph | ✅ | N条 | 快讯+深度 |
+| TechFlow | ✅ | N条 | 快讯+深度 |
 
 ### X/Twitter列表
 - 列表1: ✅ bird (获取N条)
 - 列表2: ✅ bird (获取N条)
-- Following用户: ✅ bird (获取N条) / ⚠️ web_fetch / ❌ 失败
+- Following用户: ✅ bird (获取N条)
 ```
 
 ### 信息分类（6大类）
