@@ -98,25 +98,31 @@ bird list-timeline <list_id> -n 20 \
 **重要**：bird必须使用 `--auth-token` 和 `--ct0` 命令行参数传递cookie，不能只设置环境变量！
 
 **优先使用bird**（如果用户提供了有效cookie）：
+
+**重要**：添加 `--max-pages 10 --delay 500` 参数以避免限流，尽量获取时间窗口内的所有消息：
 ```bash
 # 先设置环境变量（便于使用）
 export X_CT0="用户提供的ct0值"
 export X_AUTH_TOKEN="用户提供的auth_token值"
 
 # bird命令必须传递cookie参数
-bird list-timeline 1826855418095980750 -n 20 \
+# 添加 --max-pages 10 --delay 500 避免限流
+bird list-timeline 1826855418095980750 --max-pages 10 --delay 500 \
   --auth-token "${X_AUTH_TOKEN}" \
   --ct0 "${X_CT0}"
 
-bird list-timeline 1469191354446401543 -n 20 \
+bird list-timeline 1469191354446401543 --max-pages 10 --delay 500 \
   --auth-token "${X_AUTH_TOKEN}" \
   --ct0 "${X_CT0}"
 ```
 
 **对于Following用户，必须使用bird**：
+
+**重要**：添加 `--max-pages 10 --delay 500` 参数以避免限流：
 ```bash
 # 用bird获取Following时间线
-bird home --following -n 20 \
+# 添加 --max-pages 10 --delay 500 避免限流
+bird home --following --max-pages 10 --delay 500 \
   --auth-token "${X_AUTH_TOKEN}" \
   --ct0 "${X_CT0}"
 ```
