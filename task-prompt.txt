@@ -34,21 +34,17 @@ echo "ct0: ${X_CT0:-未设置}"
 ```
 ⚠️ X/Twitter Cookie 未设置或已失效
 
-请选择：
-1. 提供新的cookie值（推荐，bird更可靠）：
-   - 在 x.com 登录后，打开开发者工具 (F12)
-   - Application -> Cookies -> https://x.com
-   - 复制 ct0 和 auth_token 的值发送给我
+请提供新的cookie值（bird需要cookie才能工作）：
+- 在 x.com 登录后，打开开发者工具 (F12)
+- Application -> Cookies -> https://x.com
+- 复制 ct0 和 auth_token 的值发送给我
 
-2. 使用 web_fetch 替代bird（功能可能不完整）
-
-请回复你的选择，或直接发送新的cookie值。
-```
+如果无法提供cookie，将跳过X/Twitter数据爬取。
 
 **等待用户回复后再继续执行后续任务。**
 
 **情况B：Cookie有效**
-→ 继续执行任务，使用bird和browser爬取X列表
+→ 继续执行任务，使用bird爬取X列表
 
 **重要**：bird必须使用命令行参数传递cookie，不能只依赖环境变量：
 ```bash
@@ -120,21 +116,6 @@ bird home --following -n 20 \
   --auth-token "${X_AUTH_TOKEN}" \
   --ct0 "${X_CT0}"
 ```
-
-**Fallback使用web_fetch**（仅当bird和browser都失败时）：
-```javascript
-const listPage = await web_fetch({
-  url: "https://x.com/i/lists/xxxx",
-  extractMode: "text",
-  maxChars: 50000
-});
-```
-
-**记录X数据来源：**
-- ✅ bird（用户提供cookie）
-- ✅ browser（Following用户）
-- ⚠️ web_fetch（fallback）
-- ❌ 无法获取
 
 **查询列表：**
 1. https://x.com/i/lists/1826855418095980750
