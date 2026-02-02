@@ -4,18 +4,56 @@
 
 ## 任务执行流程（严格按顺序执行）
 
-### 第一步：检查BlogWatcher和X/Twitter Cookie
+### 第一步：获取BlogWatcher数据库中的时间窗口内文章
 
-**1.1 扫描BlogWatcher订阅的RSS源**
+**1.1 扫描最新RSS更新**
 
 ```bash
-# 扫描所有已订阅的RSS源
+# 扫描所有已订阅的RSS源，获取最新文章
 blogwatcher scan
 ```
 
-**记录BlogWatcher获取的文章：**
-- 记录获取的总数和最新文章
-- 筛选时间窗口内的文章
+**1.2 从本地数据库获取时间窗口内的所有文章**
+
+**关键：必须使用 `--all` 参数获取所有历史文章（含已读），因为之前扫描过的文章也在数据库中：**
+
+```bash
+# 获取所有文章（包括已读）
+blogwatcher articles --all
+
+# 按博客过滤，获取特定源的所有文章
+blogwatcher articles --all -b "CoinDesk"
+blogwatcher articles --all -b "TechFlow"
+blogwatcher articles --all -b "PANews"
+blogwatcher articles --all -b "BlockBeats"
+blogwatcher articles --all -b "Cointelegraph"
+```
+
+**1.3 筛选时间窗口内的文章**
+
+根据 `Published` 日期筛选过去 {{HOURS}} 小时内的文章：
+
+```bash
+# 示例：获取CoinDesk过去15小时内的所有文章
+blogwatcher articles --all -b "CoinDesk" | grep "Published: 2026-02-02"
+
+# 统计每个订阅源在时间窗口内的文章数量
+for blog in "CoinDesk" "TechFlow" "PANews" "BlockBeats" "Cointelegraph"; do
+  count=$(blogwatcher articles --all -b "$blog" 2>/dev/null | grep "Published: $(date -u +'%Y-%m-%d')" | wc -l)
+  echo "$blog: $count 篇"
+done
+```
+
+**1.4 记录获取结果**
+
+| 订阅源 | 获取数量 | 状态 |
+|--------|----------|------|
+| PANews | N条 | ✅ |
+| CoinDesk | N条 | ✅ |
+| BlockBeats | N条 | ✅ |
+| Cointelegraph | N条 | ✅ |
+| TechFlow | N条 | ✅ |
+| **总计** | **N条** | ✅ |
 
 **1.2 检查X/Twitter Cookie**
 
@@ -52,40 +90,6 @@ bird list-timeline <list_id> -n 20 \
   --auth-token "${X_AUTH_TOKEN}" \
   --ct0 "${X_CT0}"
 ```
-
----
-
-### 第二步：爬取新闻快讯网站
-
-**重要**：根据信息源类型选择不同的爬取方式：
-
-#### 2.1 使用BlogWatcher扫描RSS订阅源（有RSS的信息源）
-
-**优先使用BlogWatcher**（更高效、内容更完整）：
-```bash
-# 扫描RSS订阅
-blogwatcher scan
-
-# 获取最新文章列表
-blogwatcher articles
-
-# 筛选时间窗口内的文章
-# 注意：BlogWatcher默认显示所有未读文章，需根据pubDate筛选
-```
-
-**已配置的RSS订阅源：**
-| 网站 | RSS URL | 用途 |
-|------|---------|------|
-| PANews | https://www.panewslab.com/zh/rss/newsflash.xml | 快讯 |
-| CoinDesk | https://www.coindesk.com/arc/outboundfeeds/rss | 快讯+深度 |
-| BlockBeats | https://api.theblockbeats.news/v2/rss/all | 快讯+深度 |
-| Cointelegraph | https://cointelegraph.com/rss | 快讯+深度 |
-| TechFlow | https://www.techflowpost.com/api/client/common/rss.xml | 快讯+深度 |
-
-**记录BlogWatcher获取状态：**
-- ✅ blogwatcher成功获取（记录N条）
-- ⚠️ 部分成功（记录获取到的数量）
-- ❌ 扫描失败（记录原因）
 
 ---
 
