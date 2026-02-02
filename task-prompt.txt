@@ -80,7 +80,11 @@ blogwatcher articles
 **已配置的RSS订阅源：**
 | 网站 | RSS URL | 用途 |
 |------|---------|------|
-| TechFlow | https://www.techflowpost.com/api/client/common/rss.xml | 快讯+深度文章 |
+| PANews | https://www.panewslab.com/zh/rss/newsflash.xml | 快讯 |
+| CoinDesk | https://www.coindesk.com/arc/outboundfeeds/rss | 快讯+深度 |
+| BlockBeats | https://api.theblockbeats.news/v2/rss/all | 快讯+深度 |
+| Cointelegraph | https://cointelegraph.com/rss | 快讯+深度 |
+| TechFlow | https://www.techflowpost.com/api/client/common/rss.xml | 快讯+深度 |
 
 **记录BlogWatcher获取状态：**
 - ✅ blogwatcher成功获取（记录N条）
@@ -104,15 +108,12 @@ blogwatcher articles
 - ⚠️ browser部分成功（记录获取到的数量）
 - ❌ 无法访问/被限制（记录原因）
 
-**无RSS的网站列表：**
-1. https://www.panewslab.com/zh/newsflash
-2. https://www.theblockbeats.info/newsflash
-3. https://www.coindesk.com/latest-crypto-news
-4. https://www.cointelegraph.com/category/latest-news
-5. https://www.binance.com/en/support/announcement/list/49
-6. https://www.binance.com/en/support/announcement/list/93
-7. https://www.binance.com/en/support/announcement/list/161
-8. https://www.binance.com/en/support/announcement/list/48
+**仍需使用browser的网站（无RSS）：**
+- 币安公告页面（需动态加载）：
+  - https://www.binance.com/en/support/announcement/list/49 (新产品)
+  - https://www.binance.com/en/support/announcement/list/93 (活动)
+  - https://www.binance.com/en/support/announcement/list/161 (NFT)
+  - https://www.binance.com/en/support/announcement/list/48 (代币)
 
 ---
 
@@ -163,56 +164,6 @@ const listPage = await web_fetch({
 1. https://x.com/i/lists/1826855418095980750
 2. https://x.com/i/lists/1469191354446401543
 3. https://x.com/following（Following用户，必须用bird）
-
----
-
-### 第四步：爬取深度长文网站
-
-**4.1 使用BlogWatcher获取有RSS的深度长文**
-
-**TechFlow深度文章可通过BlogWatcher RSS获取：**
-```bash
-# BlogWatcher已包含TechFlow快讯和深度文章
-# 所有文章会统一显示在 blogwatcher articles 中
-# 筛选 article/detail_ 开头的链接为深度文章
-```
-
-**4.2 使用browser获取无RSS的深度长文**
-
-**无RSS的深度长文网站必须先用browser打开列表页获取链接，再逐个用web_fetch获取完整内容。**
-
-**步骤：**
-1. **用browser打开列表页**
-   ```bash
-   browser navigate "https://xxxxx"
-   browser snapshot (timeMs: 3000)
-   browser act (scroll y: 800, repeat 2-3 times)
-   browser snapshot
-   ```
-2. **从browser快照中找到时间窗口内的文章链接**
-3. **对每篇文章使用web_fetch获取完整内容**
-   ```javascript
-   const article = await web_fetch({
-     url: "https://xxxxx/article/xxxxx",
-     extractMode: "text",
-     maxChars: 50000
-   });
-   ```
-4. **记录每篇文章的标题和链接**
-
-**记录每个网站的状态：**
-- browser打开列表页是否成功
-- 找到多少篇文章链接
-- 成功获取完整内容的文章数
-- 如果browser无法获取列表页，标记为❌
-
-**深度长文网站：**
-| 网站 | RSS URL | 爬取方式 |
-|------|---------|----------|
-| techflowpost.com | https://www.techflowpost.com/api/client/common/rss.xml | ✅ BlogWatcher |
-| foresightnews.pro | 无官方RSS | ❌ browser+web_fetch |
-| theblockbeats.info | 无官方RSS | ❌ browser+web_fetch |
-| panewslab.com | 无官方RSS | ❌ browser+web_fetch |
 
 ---
 
@@ -293,19 +244,12 @@ const listPage = await web_fetch({
 | panewslab.com | ✅ | N条 |
 | theblockbeats.info | ✅/⚠️/❌ | N条 |
 | coindesk.com | ✅/⚠️/❌ | N条 |
-| ... | ... | ... |
+| cointelegraph.com | ✅/⚠️/❌ | N条 |
 
 ### X/Twitter列表
 - 列表1: ✅ bird (获取N条)
 - 列表2: ✅ bird (获取N条)
 - Following用户: ✅ bird (获取N条) / ⚠️ web_fetch / ❌ 失败
-
-### 深度长文网站
-| 网站 | 爬取方式 | 状态 | 获取数量 |
-|------|----------|------|----------|
-| techflowpost.com | BlogWatcher RSS | ✅ | X篇 |
-| foresightnews.pro | browser+web_fetch | ✅/❌ | X篇 |
-| ... | ... | ... | ... |
 ```
 
 ### 信息分类（6大类）
