@@ -4,7 +4,20 @@
 
 ## 任务执行流程（严格按顺序执行）
 
-### 第一步：检查X/Twitter Cookie
+### 第一步：检查BlogWatcher和X/Twitter Cookie
+
+**1.1 扫描BlogWatcher订阅的RSS源**
+
+```bash
+# 扫描所有已订阅的RSS源
+blogwatcher scan
+```
+
+**记录BlogWatcher获取的文章：**
+- 记录获取的总数和最新文章
+- 筛选时间窗口内的文章
+
+**1.2 检查X/Twitter Cookie**
 
 **在开始任何爬取任务之前，必须先检查cookie状态。**
 
@@ -46,9 +59,37 @@ bird list-timeline <list_id> -n 20 \
 
 ---
 
-### 第二步：爬取新闻快讯网站（必须使用browser）
+### 第二步：爬取新闻快讯网站
 
-**重要**：所有新闻网站必须使用browser，web_fetch无法处理JS渲染的动态内容。
+**重要**：根据信息源类型选择不同的爬取方式：
+
+#### 2.1 使用BlogWatcher扫描RSS订阅源（有RSS的信息源）
+
+**优先使用BlogWatcher**（更高效、内容更完整）：
+```bash
+# 扫描RSS订阅
+blogwatcher scan
+
+# 获取最新文章列表
+blogwatcher articles
+
+# 筛选时间窗口内的文章
+# 注意：BlogWatcher默认显示所有未读文章，需根据pubDate筛选
+```
+
+**已配置的RSS订阅源：**
+| 网站 | RSS URL | 用途 |
+|------|---------|------|
+| TechFlow | https://www.techflowpost.com/api/client/common/rss.xml | 快讯+深度文章 |
+
+**记录BlogWatcher获取状态：**
+- ✅ blogwatcher成功获取（记录N条）
+- ⚠️ 部分成功（记录获取到的数量）
+- ❌ 扫描失败（记录原因）
+
+#### 2.2 使用browser爬取无RSS的信息源
+
+**无RSS的网站必须使用browser**（web_fetch无法处理JS渲染的动态内容）。
 
 **每个网站按以下步骤：**
 1. 使用browser打开页面
@@ -63,17 +104,15 @@ bird list-timeline <list_id> -n 20 \
 - ⚠️ browser部分成功（记录获取到的数量）
 - ❌ 无法访问/被限制（记录原因）
 
-**网站列表：**
+**无RSS的网站列表：**
 1. https://www.panewslab.com/zh/newsflash
-2. https://foresightnews.pro/news
-3. https://www.techflowpost.com/zh-CN/newsletter
-4. https://www.theblockbeats.info/newsflash
-5. https://www.coindesk.com/latest-crypto-news
-6. https://www.cointelegraph.com/category/latest-news
-7. https://www.binance.com/en/support/announcement/list/49
-8. https://www.binance.com/en/support/announcement/list/93
-9. https://www.binance.com/en/support/announcement/list/161
-10. https://www.binance.com/en/support/announcement/list/48
+2. https://www.theblockbeats.info/newsflash
+3. https://www.coindesk.com/latest-crypto-news
+4. https://www.cointelegraph.com/category/latest-news
+5. https://www.binance.com/en/support/announcement/list/49
+6. https://www.binance.com/en/support/announcement/list/93
+7. https://www.binance.com/en/support/announcement/list/161
+8. https://www.binance.com/en/support/announcement/list/48
 
 ---
 
@@ -127,9 +166,20 @@ const listPage = await web_fetch({
 
 ---
 
-### 第四步：爬取深度长文网站（必须先使用browser）
+### 第四步：爬取深度长文网站
 
-**重要**：深度长文必须先用browser打开列表页获取链接，再逐个用web_fetch获取完整内容。
+**4.1 使用BlogWatcher获取有RSS的深度长文**
+
+**TechFlow深度文章可通过BlogWatcher RSS获取：**
+```bash
+# BlogWatcher已包含TechFlow快讯和深度文章
+# 所有文章会统一显示在 blogwatcher articles 中
+# 筛选 article/detail_ 开头的链接为深度文章
+```
+
+**4.2 使用browser获取无RSS的深度长文**
+
+**无RSS的深度长文网站必须先用browser打开列表页获取链接，再逐个用web_fetch获取完整内容。**
 
 **步骤：**
 1. **用browser打开列表页**
@@ -157,11 +207,12 @@ const listPage = await web_fetch({
 - 如果browser无法获取列表页，标记为❌
 
 **深度长文网站：**
-1. https://www.techflowpost.com/zh-CN/article
-2. https://www.techflowpost.com/zh-CN/research
-3. https://www.theblockbeats.info/article
-4. https://www.panewslab.com/en/in-depth
-5. https://foresightnews.pro/column
+| 网站 | RSS URL | 爬取方式 |
+|------|---------|----------|
+| techflowpost.com | https://www.techflowpost.com/api/client/common/rss.xml | ✅ BlogWatcher |
+| foresightnews.pro | 无官方RSS | ❌ browser+web_fetch |
+| theblockbeats.info | 无官方RSS | ❌ browser+web_fetch |
+| panewslab.com | 无官方RSS | ❌ browser+web_fetch |
 
 ---
 
@@ -223,18 +274,25 @@ const listPage = await web_fetch({
 # 加密货币新闻快讯报告（过去{{HOURS}}小时）
 
 **数据时间窗口**: YYYY-MM-DD HH:MM - HH:MM (UTC)  
-**X数据来源**: ✅ bird + browser / ⚠️ web_fetch(fallback)
+**RSS数据来源**: ✅ BlogWatcher  
+**X数据来源**: ✅ bird
 ```
 
 ### 网站爬取状态
 ```
 ## 网站爬取状态
 
-### 新闻快讯网站（全部使用browser）
+### BlogWatcher RSS订阅（自动扫描）
+| 订阅源 | 状态 | 获取数量 | 备注 |
+|--------|------|----------|------|
+| TechFlow RSS | ✅ | N条 | 快讯+深度文章 |
+
+### 新闻快讯网站（无RSS，使用browser）
 | 网站 | 状态 | 获取数量 |
 |------|------|----------|
 | panewslab.com | ✅ | N条 |
-| foresightnews.pro | ✅/⚠️/❌ | N条 |
+| theblockbeats.info | ✅/⚠️/❌ | N条 |
+| coindesk.com | ✅/⚠️/❌ | N条 |
 | ... | ... | ... |
 
 ### X/Twitter列表
@@ -242,11 +300,12 @@ const listPage = await web_fetch({
 - 列表2: ✅ bird (获取N条)
 - Following用户: ✅ bird (获取N条) / ⚠️ web_fetch / ❌ 失败
 
-### 深度长文网站（先browser获取列表，再用web_fetch获取文章）
-| 网站 | 列表页状态 | 找到文章 | 获取完整内容 | 备注 |
-|------|------------|----------|--------------|------|
-| techflowpost.com/article | ✅/❌ | X篇 | X篇 | 或"本次无更新" |
-| ... | ... | ... | ... | ... |
+### 深度长文网站
+| 网站 | 爬取方式 | 状态 | 获取数量 |
+|------|----------|------|----------|
+| techflowpost.com | BlogWatcher RSS | ✅ | X篇 |
+| foresightnews.pro | browser+web_fetch | ✅/❌ | X篇 |
+| ... | ... | ... | ... |
 ```
 
 ### 信息分类（6大类）
