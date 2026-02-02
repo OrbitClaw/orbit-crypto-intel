@@ -37,6 +37,13 @@ echo "ct0: ${X_CT0:-未设置}"
 **情况B：Cookie有效**
 → 继续执行任务，使用bird和browser爬取X列表
 
+**重要**：bird必须使用命令行参数传递cookie，不能只依赖环境变量：
+```bash
+bird list-timeline <list_id> -n 20 \
+  --auth-token "${X_AUTH_TOKEN}" \
+  --ct0 "${X_CT0}"
+```
+
 ---
 
 ### 第二步：爬取新闻快讯网站（必须使用browser）
@@ -72,10 +79,22 @@ echo "ct0: ${X_CT0:-未设置}"
 
 ### 第三步：爬取X/Twitter列表
 
+**重要**：bird必须使用 `--auth-token` 和 `--ct0` 命令行参数传递cookie，不能只设置环境变量！
+
 **优先使用bird**（如果用户提供了有效cookie）：
 ```bash
-bird list-timeline 1826855418095980750 -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
-bird list-timeline 1469191354446401543 -n 20 --auth-token "${X_AUTH_TOKEN}" --ct0 "${X_CT0}"
+# 先设置环境变量（便于使用）
+export X_CT0="用户提供的ct0值"
+export X_AUTH_TOKEN="用户提供的auth_token值"
+
+# bird命令必须传递cookie参数
+bird list-timeline 1826855418095980750 -n 20 \
+  --auth-token "${X_AUTH_TOKEN}" \
+  --ct0 "${X_CT0}"
+
+bird list-timeline 1469191354446401543 -n 20 \
+  --auth-token "${X_AUTH_TOKEN}" \
+  --ct0 "${X_CT0}"
 ```
 
 **对于Following用户，必须使用browser**：
