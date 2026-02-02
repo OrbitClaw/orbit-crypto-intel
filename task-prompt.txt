@@ -97,13 +97,12 @@ bird list-timeline 1469191354446401543 -n 20 \
   --ct0 "${X_CT0}"
 ```
 
-**对于Following用户，必须使用browser**：
+**对于Following用户，必须使用bird**：
 ```bash
-# 用browser访问following页面
-browser navigate "https://x.com/following"
-browser snapshot (timeMs: 3000)
-browser act (scroll y: 800, repeat 2-3 times)
-browser snapshot
+# 用bird获取Following时间线
+bird home --following -n 20 \
+  --auth-token "${X_AUTH_TOKEN}" \
+  --ct0 "${X_CT0}"
 ```
 
 **Fallback使用web_fetch**（仅当bird和browser都失败时）：
@@ -124,7 +123,7 @@ const listPage = await web_fetch({
 **查询列表：**
 1. https://x.com/i/lists/1826855418095980750
 2. https://x.com/i/lists/1469191354446401543
-3. https://x.com/following（Following用户，必须用browser）
+3. https://x.com/following（Following用户，必须用bird）
 
 ---
 
@@ -241,7 +240,7 @@ const listPage = await web_fetch({
 ### X/Twitter列表
 - 列表1: ✅ bird (获取N条)
 - 列表2: ✅ bird (获取N条)
-- Following用户: ✅ browser (获取N条) / ⚠️ web_fetch / ❌ 失败
+- Following用户: ✅ bird (获取N条) / ⚠️ web_fetch / ❌ 失败
 
 ### 深度长文网站（先browser获取列表，再用web_fetch获取文章）
 | 网站 | 列表页状态 | 找到文章 | 获取完整内容 | 备注 |
